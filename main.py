@@ -8,7 +8,8 @@ import config
 from graph import graph_builder
 import runtime
 from telegram_handlers import start, handle_message
-
+from dotenv import load_dotenv
+load_dotenv()
 
 def main():
     print("Připojuji se k Supabase...")
