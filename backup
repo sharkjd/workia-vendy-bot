@@ -1,0 +1,106 @@
+# --- Načtení proměnných z .env a práce s prostředím ---
+import os
+from dotenv import load_dotenv
+# --- Typy a stav pro LangGraph ---
+from typing import Annotated
+from typing_extensions import TypedDict
+# --- Stavový graf a redukce zpráv ---
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
+# --- LLM od Google (Gemini) ---
+from langchain_google_genai import ChatGoogleGenerativeAI
+# --- Telegram Bot API ---
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+
+# Nové importy pro databázi
+from psycopg_pool import ConnectionPool
+from langgraph.checkpoint.postgres import PostgresSaver
+
+# Načte proměnné z .env (TELEGRAM_BOT_TOKEN, GEMINI_API_KEY, DATABASE_URL)
+load_dotenv()
+# URI připojení k PostgreSQL (např. Supabase)
+DB_URI = os.getenv("DATABASE_URL")
+
+# Stav grafu: seznam zpráv, které se při přidání slučují přes add_messages (historie chatu)
+class AgentState(TypedDict):
+    messages: Annotated[list, add_messages]
+
+# Inicializace modelu Gemini; používá se pro generování odpovědí
+llm = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash",
+    api_key=os.getenv("GEMINI_API_KEY"),
+    temperature=0.7,
+    max_tokens=1000,
+)
+
+# Uzel grafu: vezme aktuální zprávy, pošle je do LLM a vrátí odpověď jako novou zprávu
+def chatbot_node(state: AgentState) -> AgentState:
+    response = llm.invoke(state["messages"])
+    return {"messages": [response]}
+
+# Sestavení grafu: jeden uzel "chatbot", vstup → chatbot → konec
+graph = StateGraph(AgentState)
+graph.add_node("chatbot", chatbot_node)
+graph.add_edge(START, "chatbot")
+graph.add_edge("chatbot", END)
+
+# Globální proměnné, které naplníme až při startu programu
+graph = None   # zkompilovaný LangGraph s checkpointerem (paměť v DB)
+pool = None    # connection pool k PostgreSQL
+
+# Reakce na příkaz /start: pošle uživateli uvítací zprávu
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Ahoj! Jsem Vendy a odteď si pamatuju, co mi píšeš! 🐘")
+
+# Reakce na každou textovou zprávu (kromě příkazů): předá ji do grafu a odpověď pošle zpět
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_text = update.message.text
+    # Vytáhneme si unikátní ID uživatele z Telegramu
+    user_id = str(update.message.chat_id)
+
+    # Vstup do grafu: jedna nová uživatelská zpráva (historie se načte z DB podle thread_id)
+    inputs = {"messages": [("user", user_text)]}
+
+    # NOVÉ: Konfigurace s Thread ID
+    # Tímto říkáme LangGraphu, do jaké "složky" v databázi se má podívat
+    config = {"configurable": {"thread_id": user_id}}
+
+    # Spustíme graf a předáme mu i ten config
+    result = graph.invoke(inputs, config=config)
+
+    # Poslední zpráva v result je odpověď modelu; její text pošleme uživateli
+    bot_reply = result["messages"][-1].content
+    await update.message.reply_text(bot_reply)
+
+# Hlavní vstupní bod: připojí DB, zkompiluje graf s pamětí a spustí Telegram bota
+def main():
+    global graph, pool
+
+    print("Připojuji se k Supabase...")
+    # Otevřeme "bazén" připojení k databázi (max 20 spojení, autocommit pro checkpointer)
+    pool = ConnectionPool(
+        conninfo=DB_URI,
+        max_size=20,
+        kwargs={"autocommit": True, "prepare_threshold": None}
+    )
+
+    # NOVÉ: Předáme připojení Checkpointeru a ten následně do grafu
+    # PostgresSaver ukládá stav konverzací do PostgreSQL, takže každý uživatel má vlastní historii
+    checkpointer = PostgresSaver(pool)
+    graph = graph.compile(checkpointer=checkpointer)
+
+    # Vytvoření Telegram aplikace s tokenem z .env
+    app = Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
+
+    # Registrace handlerů: /start volá start(), ostatní textové zprávy volají handle_message()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    print("Vendy běží a má paměť! Zkus si s ní povídat na Telegramu.")
+    # Blokující běh bota – čeká na nové zprávy (long polling)
+    app.run_polling()
+
+# Spuštění main() jen při přímém volání souboru (ne při importu)
+if __name__ == "__main__":
+    main()
