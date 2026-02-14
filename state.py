@@ -37,4 +37,4 @@ class AgentState(TypedDict):
     
     # Historie všech provedených oprav (používá reduktor append_info)
     # Odpovídá sloupci 'corrected_info' v SeaTable 
-    corrected_info: Annotated[str, append_info]
+    corrected_info: str

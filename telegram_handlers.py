@@ -66,4 +66,4 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print("❌ ERROR: Bot vygeneroval prázdnou zprávu!")
 
     # Odeslání odpovědi uživateli na Telegram
-    await update.message.reply_text(bot_reply)
+    await update.message.reply_text(bot_reply, parse_mode='HTML')
