@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 
-# Importy tvých agentů ze samostatných souborů
+# Importy tvých agentů
 from agents.start_faze import start_faze_node
 from agents.verify_data import verify_data_node
 from agents.verify_cv import verify_cv_node
@@ -10,13 +10,14 @@ from agents.change_process import change_process_node
 from state import AgentState
 from model import llm_with_tools
 from tools.edit_candidate_record import edit_candidate_record
+from tools.sea_database import get_initial_state
 
 # --- 1. ROZHODOVACÍ LOGIKA (ROUTERS) ---
 
 def route_by_status(state: AgentState):
     """
-    Vstupní brána a rozcestník po akci nástroje. 
-    Rozhodne, který agent má dostat slovo podle stavu v DB.
+    Rozcestník: Rozhodne, který agent má mluvit na základě statusu ve State.
+    Protože předtím proběhl SYNC, status je vždy aktuální ze SeaTable.
     """
     status = state.get("status", "START")
     
@@ -33,39 +34,68 @@ def route_by_status(state: AgentState):
 
 def should_continue(state: AgentState):
     """
-    Hlídka na výstupu z každého agenta.
-    Zjišťuje, zda model vygeneroval požadavek na nástroj (tool_calls).
+    Výhybka: Pokud AI vygenerovala požadavek na Tool, jde se do 'tools'.
+    Pokud jen odpověděla textem, končí turn (END).
     """
     messages = state["messages"]
     last_message = messages[-1]
     
-    # Kontrola, zda AI chce volat nástroj
     if hasattr(last_message, "tool_calls") and last_message.tool_calls:
         return "tools"
     
-    # Pokud ne, turn končí a čekáme na vstup uživatele z Telegramu
     return END
 
-# --- 2. KONFIGURACE UZLŮ ---
+# --- 2. UZLY (NODES) ---
+
+def sync_state_node(state: AgentState):
+    """
+    Tvoje "Čtečka reality": Načte data ze SeaTable a přepíše State.
+    """
+    # Získáme ID z candidate_data (které tam vložíme v telegram_handlers)
+    user_id = state.get("candidate_data", {}).get("external_id")
+    
+    if not user_id:
+        print("❌ SYNC ERROR: Chybí external_id ve state!")
+        return state
+
+    fresh_db_data = get_initial_state(user_id)
+    
+    if not fresh_db_data:
+        print(f"❌ SYNC ERROR: Nepodařilo se načíst data pro ID {user_id}")
+        return state
+
+    print(f"🔄 SYNC: Načten status '{fresh_db_data['status']}' pro řádek {fresh_db_data['row_id']}")
+
+    return {
+        "row_id": fresh_db_data["row_id"],
+        "status": fresh_db_data["status"],
+        "candidate_data": fresh_db_data["candidate_data"],
+        "corrected_info": fresh_db_data["corrected_info"]
+    }
+
+# --- 3. KONFIGURACE GRAFU ---
 
 graph_builder = StateGraph(AgentState)
 
-# Definice nástrojů a vytvoření ToolNode (uzel pro vykonání kódu nástrojů)
-tools = [edit_candidate_record]
-tool_node = ToolNode(tools)
-
-# Přidání uzlů do grafu
+# Přidání uzlů
+graph_builder.add_node("sync_state", sync_state_node)
 graph_builder.add_node("start_faze", start_faze_node)
 graph_builder.add_node("verify_data", verify_data_node)
 graph_builder.add_node("verify_cv", verify_cv_node)
 graph_builder.add_node("change_process", change_process_node)
-graph_builder.add_node("tools", tool_node)
 
-# --- 3. DEFINICE CEST (EDGES) ---
+# Tool uzel
+tools = [edit_candidate_record]
+graph_builder.add_node("tools", ToolNode(tools))
 
-# A. START -> První rozhodnutí kam jít
+# --- 4. DEFINICE CEST (EDGES) ---
+
+# A. START -> Vždy nejdřív SYNC (přelízneme State daty z DB)
+graph_builder.add_edge(START, "sync_state")
+
+# B. SYNC -> Rozcestník k agentům
 graph_builder.add_conditional_edges(
-    START,
+    "sync_state",
     route_by_status,
     {
         "start_faze": "start_faze",
@@ -75,8 +105,7 @@ graph_builder.add_conditional_edges(
     }
 )
 
-# B. AGENTI -> Rozhodnutí zda volat Tool nebo končit (END)
-# Propojíme všechny agenty se stejnou logikou výhybky
+# C. AGENTI -> Rozhodnutí: Tool (smyčka) nebo END (Telegram)
 for node_name in ["start_faze", "verify_data", "verify_cv", "change_process"]:
     graph_builder.add_conditional_edges(
         node_name,
@@ -87,18 +116,8 @@ for node_name in ["start_faze", "verify_data", "verify_cv", "change_process"]:
         }
     )
 
-# C. TOOLS -> LOOPBACK (Návrat na rozcestník)
-# Zde byla chyba START - nyní se vracíme k rozhodovací funkci route_by_status
-graph_builder.add_conditional_edges(
-    "tools",
-    route_by_status,
-    {
-        "start_faze": "start_faze",
-        "verify_data": "verify_data",
-        "verify_cv": "verify_cv",
-        "change_process": "change_process"
-    }
-)
+# D. TOOLS -> Návrat do SYNC (Klíčová smyčka pro plynulý přechod mezi fázemi)
+# Po každém zápisu se vrátíme k "čtečce reality", která posune status a spustí dalšího agenta
+graph_builder.add_edge("tools", "sync_state")
 
-# --- 4. KOMPILACE ---
-# graph = graph_builder.compile(checkpointer=checkpointer) # kompiluješ v main.py
+# Export pro main.py

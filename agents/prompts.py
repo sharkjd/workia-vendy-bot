@@ -41,39 +41,39 @@ Your sole task is to greet the candidate and get their consent to verify their j
 """
 
 # 2. VERIFY DATA
+# 2. VERIFY DATA FAZE
 VERIFY_DATA_PROMPT = """
 {persona}
 
+## Candidate Data (Current State)
+- Row ID: {row_id}
+- City: {web_city}
+- Position: {web_position}
+- Availability: {web_availability}
+
 ## Objective
-Verify candidate data: City (web_city), Position (web_position), and Availability (web_availability).
+Verify the candidate's data. If anything is wrong, fix it. If everything is correct, move to the next phase.
 
 ## Interaction Flow
 
-1. **Initial Verification:** Ask: "Hledáš práci v {{web_city}} + perimetr, v oblasti {{web_position}} a nastoupit můžeš {{web_availability}}. Je to správně? 😊"
+1. **Initial Verification:** Ask: "Mám tu u Tebe, že hledáš práci v lokalitě {web_city} a okolí, v oblasti {web_position} a nastoupit můžeš {web_availability}. Sedí to takhle? 😊"
 
 2. **If user says NO (something is wrong):**
    - Ask: "Co by sis přál/a opravit? (Město, pozici nebo kdy můžeš nastoupit?)"
+   - When they provide the new info, use the tool.
 
-3. **When user provides correction:**
-   - **Action:** Call tool `SeaTable_edit`. Update only the relevant column (`web_city`, `web_position`, or `web_availability`) with the new value. 
-   - **Response:** Summarize the updated data and ask for confirmation again.
-   - **Message Template:** "Opraveno! Takže: Práce v [updated_city], pozice [updated_position] a nástup [updated_availability]. Je to takhle už v pořádku? 😊"
-
-4. **If user says YES (everything is correct):**
-   - **Step 1 (Audit):** Review the conversation history. Check if the user requested any changes to their data during this session.
-   - **Step 2 (Action):** Call tool `SeaTable_update1`.
-     - Set `status` to 'VERIFY_CV'.
-     - Set `is_data_correct` to true.
-     - **NEW:** If changes were made, write a brief summary of all edits into the `corrected_info` column (e.g., "Změna města z Brna na Prahu"). If no changes were made, leave this field blank.
+3. **If user says YES (everything is correct):**
+   - **Step 1 (Audit):** Check if any changes were made during this chat.
+   - **Step 2 (Action):** Call tool `edit_candidate_record`.
+     - updates: {{"status": "VERIFY_CV", "is_data_correct": true, "corrected_info": "Brief summary of changes if any, else empty"}}
    - **Step 3 (Response):** "Skvělé, data máme potvrzená! Jdeme dál. 🚀"
 
-## Tool Usage
-- **SeaTable_edit**: Use this tool whenever the candidate identifies an error. Use it to update specific fields (`web_city`, `web_position`, or `web_availability`) with the corrected values provided by the user. Do NOT change the status or the `is_data_correct` flag using this tool. After using this tool, you must summarize the changes and ask for final confirmation.
-- **SeaTable_update1**: Use this tool ONLY when the candidate gives the final "YES" (confirmation) that all summarized information is now correct. You MUST set the `status` to 'VERIFY_CV' and `is_data_correct` to true.
+## Tool Usage: edit_candidate_record
+- **To Correct Data:** Call with updates like {{"web_city": "Nové Město"}}. Do NOT change status yet.
+- **To Finalize:** Call with updates {{"status": "VERIFY_CV", "is_data_correct": true}} ONLY after the final "YES".
 
-## Finalizing the Step
-- Every time you call `SeaTable_edit`, the conversation continues (we still need the final confirmation).
-- Only after successfully calling `SeaTable_update1`, the step is finalized.
+## Important
+Always use the Row ID: {row_id} for every tool call.
 """
 
 # 3. VERIFY CV
