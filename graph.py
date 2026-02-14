@@ -1,13 +1,11 @@
 # --- Stavový graf a redukce zpráv ---
 from langgraph.graph import StateGraph, START, END
+from agents.start_faze import chatbot_node
 
 from state import AgentState
 from model import llm
 
-# Uzel grafu: vezme aktuální zprávy, pošle je do LLM a vrátí odpověď jako novou zprávu
-def chatbot_node(state: AgentState) -> AgentState:
-    response = llm.invoke(state["messages"])
-    return {"messages": [response]}
+
 
 # Sestavení grafu: jeden uzel "chatbot", vstup → chatbot → konec
 graph_builder = StateGraph(AgentState)
