@@ -81,19 +81,8 @@ async def webhook_start(request: WebhookStartRequest):
             detail="Graf není inicializován. Aplikace se stále spouští."
         )
     
-    # 2. Načtení dat kandidáta ze SeaTable
+    # 2. Konfigurace pro graf
     config = {"configurable": {"thread_id": telegram_id}}
-    
-    # Kontrola, zda už konverzace existuje
-    current = runtime.graph.get_state(config)
-    
-    if current.values and current.values.get("messages"):
-        # Konverzace už existuje - nebudeme začínat znovu
-        return {
-            "success": False,
-            "message": "Konverzace s tímto kandidátem již existuje",
-            "telegram_id": telegram_id
-        }
     
     # 3. Inicializace ze SeaTable
     print(f"🔍 Inicializace: Tahám data ze SeaTable pro ID {telegram_id}...")
