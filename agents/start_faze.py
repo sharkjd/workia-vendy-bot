@@ -1,5 +1,6 @@
 from langchain_core.messages import SystemMessage
-from model import llm_with_tools
+from models_config import get_llm_with_tools
+from agent_config import get_model_for_agent
 from . import prompts
 
 def start_faze_node(state):
@@ -36,8 +37,13 @@ def start_faze_node(state):
     print("="*50 + "\n")
     instructions = prompts.START_PROMPT.format(persona=prompts.BASE_VENDY_PERSONA, row_id=row_id)
     
+    # Dynamicky načteme model pro tohoto agenta z konfigurace
+    model_name = get_model_for_agent("start_faze")
+    llm = get_llm_with_tools(model_name)
+    print(f"🤖 Agent 'start_faze' používá model: {model_name}")
+    
     # We pass instructions as SystemMessage to set the behavior for this turn
-    response = llm_with_tools.invoke([SystemMessage(content=instructions)] + state["messages"])
+    response = llm.invoke([SystemMessage(content=instructions)] + state["messages"])
     if response.tool_calls:
         print(f"DEBUG: Gemini volá tool: {response.tool_calls}")
     else:

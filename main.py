@@ -3,12 +3,14 @@ import os
 from psycopg_pool import ConnectionPool
 from langgraph.checkpoint.postgres import PostgresSaver
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
-
+from telegram.ext import MessageHandler, filters
 import config
 from graph import graph_builder
 import runtime
 from telegram_handlers import start, handle_message
 from dotenv import load_dotenv
+from telegram_handlers import start, handle_message, handle_voice
+
 load_dotenv()
 
 def main():
@@ -34,7 +36,7 @@ def main():
     # Registrace handlerů: /start volá start(), ostatní textové zprávy volají handle_message()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
+    app.add_handler(MessageHandler(filters.VOICE, handle_voice)) # <--- TENTO ŘÁDEK
     print("Vendy běží a má paměť! Zkus si s ní povídat na Telegramu.")
     
     # Blokující běh bota – čeká na nové zprávy (long polling)

@@ -1,6 +1,7 @@
 # agents/verify_data.py
 from langchain_core.messages import SystemMessage
-from model import llm_with_tools
+from models_config import get_llm_with_tools
+from agent_config import get_model_for_agent
 from . import prompts
 
 
@@ -17,5 +18,10 @@ def verify_data_node(state):
         web_availability=candidate.get("web_availability", "N/A"),
     )
 
-    response = llm_with_tools.invoke([SystemMessage(content=instructions)] + state["messages"])
+    # Dynamicky načteme model pro tohoto agenta z konfigurace
+    model_name = get_model_for_agent("verify_data")
+    llm = get_llm_with_tools(model_name)
+    print(f"🤖 Agent 'verify_data' používá model: {model_name}")
+
+    response = llm.invoke([SystemMessage(content=instructions)] + state["messages"])
     return {"messages": [response]}

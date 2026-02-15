@@ -1,17 +1,48 @@
 # --- Telegram Bot API ---
+import uuid
+import os
 from telegram import Update
 from telegram.ext import ContextTypes
 
+# Ostatní tvoje moduly
 import runtime
-from tools.sea_database import get_initial_state 
+from tools.voice_processor import transcribe_voice
+from tools.sea_database import get_initial_state
 
 # Reakce na příkaz /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Ahoj! Jsem Vendy z Workia. 🤖")
 
+async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # 1. Informujeme uživatele, že posloucháme (dobré pro UX)
+    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
+    
+    # 2. Stažení hlasového souboru
+    voice = update.message.voice
+    file = await context.bot.get_file(voice.file_id)
+    
+    # Vytvoříme dočasný název souboru
+    temp_filename = f"voice_{uuid.uuid4()}.ogg"
+    await file.download_to_drive(temp_filename)
+
+    # 3. UNIVERZÁLNÍ PŘEPIS (Whisper)
+    # Tuhle část pak jen zkopíruješ pro WhatsApp handler
+    text_from_voice = await transcribe_voice(temp_filename)
+
+    if text_from_voice and len(text_from_voice.strip()) > 1:
+        # 4. Předáme přepsaný text do handle_message přes parametr overridden_text,
+        # protože objekt Message z python-telegram-bot je immutable (nelze na něm nastavovat atributy).
+        print(f"🎤 Hlasový přepis: {text_from_voice}")
+        await handle_message(update, context, overridden_text=text_from_voice)
+    else:
+        await update.message.reply_text(
+            "Omlouvám se, ale nepodařilo se mi hlasovou zprávu srozumitelně přepsat. 😔"
+        )
+
 # Reakce na zprávy
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_text = update.message.text
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE, overridden_text=None):
+    # Pokud máme přepsaný text (z hlasovky), použijeme ho, jinak klasiku ze zprávy
+    user_text = overridden_text if overridden_text else update.message.text
     user_id = str(update.message.chat_id)
     
     config = {"configurable": {"thread_id": user_id}}

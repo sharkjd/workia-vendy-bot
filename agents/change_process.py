@@ -1,5 +1,6 @@
 from langchain_core.messages import SystemMessage
-from model import llm_with_tools
+from models_config import get_llm_with_tools
+from agent_config import get_model_for_agent
 from . import prompts
 
 def change_process_node(state):
@@ -37,7 +38,12 @@ def change_process_node(state):
     if not recent_messages:
         recent_messages = messages[-1:]
 
-    # 3. Volání modelu
-    response = llm_with_tools.invoke([SystemMessage(content=instructions)] + recent_messages)
+    # 3. Dynamicky načteme model pro tohoto agenta z konfigurace
+    model_name = get_model_for_agent("change_process")
+    llm = get_llm_with_tools(model_name)
+    print(f"🤖 Agent 'change_process' používá model: {model_name}")
+
+    # 4. Volání modelu
+    response = llm.invoke([SystemMessage(content=instructions)] + recent_messages)
     
     return {"messages": [response]}
