@@ -10,7 +10,7 @@ DB_URI = os.getenv("DATABASE_URL")
 def main():
     # ZDE DOPLŇ SVÉ TELEGRAM ID (nebo ID uživatele, kterého chceš zkontrolovat)
     # Zjistíš ho z terminálu, kde ti běží main.py, nebo si ho na Telegramu vyžádej od nějakého bota (např. @userinfobot)
-    THREAD_ID = "5648432919" 
+    THREAD_ID = "5749949374" 
 
 
     print(f"Připojuji se k databázi pro čtení ID: {THREAD_ID}...")
