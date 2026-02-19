@@ -96,31 +96,3 @@ def get_llm_with_tools(model_name: str):
     tools = [edit_candidate_record]
     
     return llm.bind_tools(tools)
-
-
-# --- POMOCNÉ FUNKCE ---
-def list_available_models() -> list[str]:
-    """Vrátí seznam názvů všech dostupných modelů."""
-    return list(AVAILABLE_MODELS.keys())
-
-
-def get_model_info(model_name: str) -> dict:
-    """
-    Vrátí informace o konkrétním modelu.
-    
-    Args:
-        model_name: Název modelu
-        
-    Returns:
-        dict: Slovník s informacemi o modelu
-    """
-    if model_name not in AVAILABLE_MODELS:
-        return {"error": f"Model {model_name} neexistuje"}
-    
-    model = AVAILABLE_MODELS[model_name]
-    return {
-        "name": model_name,
-        "model": getattr(model, "model_name", "N/A"),
-        "temperature": getattr(model, "temperature", "N/A"),
-        "max_tokens": getattr(model, "max_tokens", "N/A"),
-    }

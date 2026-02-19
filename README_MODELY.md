@@ -90,16 +90,6 @@ AGENT_MODEL_MAPPING = {
 
 Tato konfigurace je optimalizovaná pro rychlost a nízké náklady. Pro složitější úkoly můžete kdykoli přepnout na silnější model.
 
-## 🔍 Debug výpisy
-
-Při spuštění aplikace uvidíte, který agent používá který model:
-
-```
-🤖 Agent 'start_faze' používá model: gemini-flash
-🤖 Agent 'verify_data' používá model: gemini-flash
-🤖 Agent 'verify_cv' používá model: gemini-pro
-```
-
 ## ⚠️ Důležité poznámky
 
 1. **Před použitím nového providera** (OpenAI, Anthropic) nezapomeňte:
@@ -107,9 +97,9 @@ Při spuštění aplikace uvidíte, který agent používá který model:
    - Přidat API klíč do `.env`
    - Odkomentovat import a definici v `models_config.py`
 
-2. **Starý soubor `model.py`** je stále v projektu, ale už se nepoužívá. Můžete ho smazat nebo ponechat jako zálohu.
+2. **Náklady**: Různé modely mají různé ceny. Gemini Flash je nejlevnější, GPT-4 nejdražší.
 
-3. **Náklady**: Různé modely mají různé ceny. Gemini Flash je nejlevnější, GPT-4 nejdražší.
+3. **Debug výpisy**: Pro zobrazení, který agent používá který model, lze do agentů dočasně přidat `print(f"🤖 Agent 'X' používá model: {model_name}")`.
 
 ## 🎯 Doporučení podle úkolu
 

@@ -1,0 +1,7 @@
+pm2 stop vendy-bot
+pm2 logs vendy-bot
+pm2 restart vendy-bot
+
+ source venv/bin/activate
+ cd ~/workia-vendy-bot
+ git pull origin main

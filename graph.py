@@ -8,7 +8,6 @@ from agents.verify_cv import verify_cv_node
 from agents.change_process import change_process_node
 
 from state import AgentState
-from model import llm_with_tools
 from tools.edit_candidate_record import edit_candidate_record
 from tools.sea_database import get_initial_state
 

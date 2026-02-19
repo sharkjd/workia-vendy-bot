@@ -54,17 +54,6 @@ def get_model_for_agent(agent_name: str) -> str:
     return AGENT_MODEL_MAPPING.get(agent_name, DEFAULT_MODEL)
 
 
-def print_agent_models():
-    """Vypíše přehled všech agentů a jejich modelů (pro debugging)."""
-    print("\n" + "="*60)
-    print("📊 KONFIGURACE MODELŮ PRO AGENTY")
-    print("="*60)
-    for agent, model in AGENT_MODEL_MAPPING.items():
-        print(f"  • {agent:20s} → {model}")
-    print(f"\n  Výchozí model: {DEFAULT_MODEL}")
-    print("="*60 + "\n")
-
-
 # --- UKÁZKY BUDOUCÍCH KONFIGURACÍ ---
 # Odkomentujte a upravte podle potřeby
 

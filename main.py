@@ -65,7 +65,9 @@ def main():
     print("🤖 Vendy běží a má paměť!")
     print(f"📱 Telegram bot: aktivní (long polling)")
     print(f"🌐 Webhook server: http://0.0.0.0:{WEBHOOK_PORT}")
-    print(f"   - POST /webhook/start - zahájení konverzace")
+    print(f"   - POST /webhook/start - zahájení konverzace (Telegram)")
+    print(f"   - POST /webhook/start/whatsapp - zahájení konverzace (WhatsApp šablona)")
+    print(f"   - GET/POST /webhook/whatsapp - WhatsApp webhook")
     print(f"   - GET /health - healthcheck")
     print("=" * 50)
     

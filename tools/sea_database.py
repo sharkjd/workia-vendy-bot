@@ -4,16 +4,29 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def get_initial_state(telegram_id: str):
+def get_initial_state(identifier: str, channel: str = "telegram"):
+    """
+    Načte počáteční stav kandidáta ze SeaTable.
+    identifier: telegram_id (chat_id) nebo whatsapp_phone podle kanálu
+    channel: "telegram" | "whatsapp" – určuje, který sloupec použít pro lookup
+    """
     server_url = 'https://cloud.seatable.io'
     api_token = os.getenv("SEATABLE_API_TOKEN")
-    
+
     base = Base(api_token, server_url)
     base.auth()
 
-    # Načteme řádek podle external_id
-    query = f"select * from Kandidáti where external_id = '{telegram_id}'"
-    rows = base.query(query)
+    # Pro Telegram: external_id (chat_id), pro WhatsApp: external_id (telefon) nebo whatsapp_phone
+    if channel == "whatsapp":
+        query = f"select * from Kandidáti where external_id = '{identifier}'"
+        rows = base.query(query)
+        if not rows:
+            # Fallback na sloupec whatsapp_phone, pokud existuje
+            query = f"select * from Kandidáti where whatsapp_phone = '{identifier}'"
+            rows = base.query(query)
+    else:
+        query = f"select * from Kandidáti where external_id = '{identifier}'"
+        rows = base.query(query)
 
     if not rows:
         return None

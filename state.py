@@ -31,31 +31,7 @@ def add_messages_with_limit(existing: list, new: list, limit: int = 10) -> list:
         return combined[-1:]
 
     return trimmed
-    """
-    Vlastní reduktor pro zprávy s omezením počtu.
-    
-    Proč to potřebujeme?
-    ---------------------
-    Výchozí `add_messages` z LangGraphu pouze přidává zprávy donekonečna.
-    To způsobuje rostoucí spotřebu tokenů (=peněz) a možné překročení 
-    kontextového okna modelu.
-    
-    Jak to funguje?
-    ---------------
-    1. Zavoláme původní `add_messages` pro správné sloučení zpráv
-       (LangGraph tím řeší duplicity, tool calls apod.)
-    2. Ořežeme seznam na posledních `limit` zpráv
-    
-    Parametry:
-    ----------
-    existing : list - Stávající zprávy ve state
-    new : list      - Nové zprávy k přidání  
-    limit : int     - Maximální počet zpráv k uchování (výchozí: 10)
-    """
-    combined = add_messages(existing, new)
-    if len(combined) > limit:
-        return combined[-limit:]
-    return combined
+
 
 # 2. STRUKTURA KANDIDÁTA: Přesné mapování sloupců ze SeaTable
 class CandidateData(TypedDict):
