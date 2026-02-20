@@ -7,8 +7,8 @@ load_dotenv()
 def get_initial_state(identifier: str, channel: str = "whatsapp"):
     """
     Načte počáteční stav kandidáta ze SeaTable.
-    identifier: whatsapp_phone (telefonní číslo) nebo external_id
-    channel: "whatsapp" – určuje, který sloupec použít pro lookup
+    identifier: external_id (Telegram chat_id nebo WhatsApp telefonní číslo)
+    channel: "whatsapp" / "telegram" – pro oba kanály se používá sloupec external_id
     """
     server_url = 'https://cloud.seatable.io'
     api_token = os.getenv("SEATABLE_API_TOKEN")
@@ -16,17 +16,8 @@ def get_initial_state(identifier: str, channel: str = "whatsapp"):
     base = Base(api_token, server_url)
     base.auth()
 
-    # Pro Telegram: external_id (chat_id), pro WhatsApp: external_id (telefon) nebo whatsapp_phone
-    if channel == "whatsapp":
-        query = f"select * from Kandidáti where external_id = '{identifier}'"
-        rows = base.query(query)
-        if not rows:
-            # Fallback na sloupec whatsapp_phone, pokud existuje
-            query = f"select * from Kandidáti where whatsapp_phone = '{identifier}'"
-            rows = base.query(query)
-    else:
-        query = f"select * from Kandidáti where external_id = '{identifier}'"
-        rows = base.query(query)
+    query = f"select * from Kandidáti where external_id = '{identifier}'"
+    rows = base.query(query)
 
     if not rows:
         return None
