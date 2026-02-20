@@ -7,6 +7,7 @@ Každý model má své specifické parametry (temperature, max_tokens, atd.).
 
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_vertexai import ChatVertexAI
 from langchain_openai import ChatOpenAI
 # from langchain_anthropic import ChatAnthropic  # Odkomentovat pro Claude
 
@@ -44,6 +45,24 @@ AVAILABLE_MODELS = {
     "gpt-5-mini": ChatOpenAI(
         model="gpt-5-mini",
         api_key=os.getenv("OPENAI_API_KEY"),
+        temperature=0,
+        max_tokens=2000,
+    ),
+    
+    # Vertex AI Gemini Flash - GCP, region europe-west1
+    "vertex-gemini-flash": ChatVertexAI(
+        model="gemini-2.5-flash",
+        project=os.getenv("GOOGLE_CLOUD_PROJECT"),
+        location=os.getenv("VERTEX_AI_LOCATION", "europe-west1"),
+        temperature=0,
+        max_tokens=1000,
+    ),
+    
+    # Vertex AI Gemini Pro - GCP, region europe-west1
+    "vertex-gemini-pro": ChatVertexAI(
+        model="gemini-2.5-pro",
+        project=os.getenv("GOOGLE_CLOUD_PROJECT"),
+        location=os.getenv("VERTEX_AI_LOCATION", "europe-west1"),
         temperature=0,
         max_tokens=2000,
     ),
