@@ -50,14 +50,14 @@ def sync_state_node(state: AgentState):
     """
     Tvoje "Čtečka reality": Načte data ze SeaTable a přepíše State.
     """
-    # Získáme ID z candidate_data (které tam vložíme v telegram_handlers)
+    # Získáme ID z candidate_data (které tam vložíme v handlerech WhatsApp)
     user_id = state.get("candidate_data", {}).get("external_id")
     
     if not user_id:
         print("❌ SYNC ERROR: Chybí external_id ve state!")
         return state
 
-    fresh_db_data = get_initial_state(user_id)
+    fresh_db_data = get_initial_state(user_id, channel="whatsapp")
     
     if not fresh_db_data:
         print(f"❌ SYNC ERROR: Nepodařilo se načíst data pro ID {user_id}")

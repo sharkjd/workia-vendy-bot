@@ -4,11 +4,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def get_initial_state(identifier: str, channel: str = "telegram"):
+def get_initial_state(identifier: str, channel: str = "whatsapp"):
     """
     Načte počáteční stav kandidáta ze SeaTable.
-    identifier: telegram_id (chat_id) nebo whatsapp_phone podle kanálu
-    channel: "telegram" | "whatsapp" – určuje, který sloupec použít pro lookup
+    identifier: whatsapp_phone (telefonní číslo) nebo external_id
+    channel: "whatsapp" – určuje, který sloupec použít pro lookup
     """
     server_url = 'https://cloud.seatable.io'
     api_token = os.getenv("SEATABLE_API_TOKEN")
