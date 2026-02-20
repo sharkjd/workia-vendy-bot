@@ -32,6 +32,29 @@ def _normalize_phone(to: str) -> str:
     return to.replace("+", "").replace(" ", "").strip()
 
 
+async def download_whatsapp_media(media_id: str) -> bytes:
+    """
+    Stáhne mediální soubor z WhatsApp Cloud API (audio, obrázek, atd.).
+    Dvoustupňový proces: 1) získat URL, 2) stáhnout binární data.
+    Vrací bytes nebo vyhodí výjimku při chybě.
+    """
+    headers = {"Authorization": f"Bearer {_get_access_token()}"}
+    phone_id = _get_phone_number_id()
+    url = f"{BASE_URL}/{media_id}?phone_number_id={phone_id}"
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(url, headers=headers)
+        resp.raise_for_status()
+        data = resp.json()
+        media_url = data.get("url")
+        if not media_url:
+            raise ValueError("WhatsApp API nevrátila URL pro media")
+
+        download_resp = await client.get(media_url, headers=headers)
+        download_resp.raise_for_status()
+        return download_resp.content
+
+
 async def send_whatsapp_text(to: str, body: str) -> bool:
     """
     Odešle běžnou textovou zprávu (odpověď v rámci 24h okna).

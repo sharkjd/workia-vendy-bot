@@ -2,9 +2,11 @@
 # Zrcadlí logiku telegram_handlers.handle_message
 
 import asyncio
+import tempfile
 import runtime
 from tools.sea_database import get_initial_state
-from whatsapp_client import send_whatsapp_text
+from tools.voice_processor import transcribe_voice
+from whatsapp_client import download_whatsapp_media, send_whatsapp_text
 
 
 def _extract_bot_reply(result: dict) -> str:
@@ -76,3 +78,34 @@ async def handle_whatsapp_message(phone_number: str, text: str) -> None:
         print("❌ ERROR: Bot vygeneroval prázdnou zprávu!")
 
     await send_whatsapp_text(thread_id, bot_reply)
+
+
+async def handle_whatsapp_voice_message(phone_number: str, media_id: str) -> None:
+    """
+    Zpracuje hlasovou zprávu: stáhne audio, přepíše pomocí Whisperu,
+    předá text do handle_whatsapp_message.
+    """
+    try:
+        audio_bytes = await download_whatsapp_media(media_id)
+    except Exception as e:
+        print(f"❌ Chyba při stahování WhatsApp audia: {e}")
+        await send_whatsapp_text(
+            _normalize_phone(phone_number),
+            "Nepodařilo se mi stáhnout hlasovou zprávu. Zkus to prosím znovu, nebo napiš textem.",
+        )
+        return
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".ogg") as tmp:
+        tmp.write(audio_bytes)
+        tmp_path = tmp.name
+
+    transcribed = await transcribe_voice(tmp_path)
+    # voice_processor v finally bloku maže soubor po přepisu
+
+    if transcribed and transcribed.strip():
+        await handle_whatsapp_message(phone_number, transcribed.strip())
+    else:
+        await send_whatsapp_text(
+            _normalize_phone(phone_number),
+            "Nepodařilo se mi přepis rozpoznat. Zkus to prosím znovu, nebo napiš textem.",
+        )

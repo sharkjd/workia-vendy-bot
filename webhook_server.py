@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 import runtime
 from tools.sea_database import get_initial_state
-from whatsapp_handlers import handle_whatsapp_message
+from whatsapp_handlers import handle_whatsapp_message, handle_whatsapp_voice_message
 from whatsapp_client import send_whatsapp_template
 
 load_dotenv()
@@ -155,11 +155,20 @@ async def whatsapp_webhook_post(request: Request):
 
             for msg in messages:
                 from_id = msg.get("from", "")
-                text_body = _extract_message_text(msg)
-                if text_body:
-                    asyncio.create_task(
-                        handle_whatsapp_message(from_id, text_body)
-                    )
+                msg_type = msg.get("type", "")
+
+                if msg_type == "audio":
+                    media_id = msg.get("audio", {}).get("id")
+                    if media_id:
+                        asyncio.create_task(
+                            handle_whatsapp_voice_message(from_id, media_id)
+                        )
+                else:
+                    text_body = _extract_message_text(msg)
+                    if text_body:
+                        asyncio.create_task(
+                            handle_whatsapp_message(from_id, text_body)
+                        )
 
     return {"status": "ok"}
 
