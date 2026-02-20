@@ -12,24 +12,24 @@ Změnou hodnot zde můžete snadno přepínat modely pro různé části aplikac
 AGENT_MODEL_MAPPING = {
     # START_FAZE - Úvodní kontakt s kandidátem
     # Úkol: Pozdrav a získání souhlasu
-    "start_faze": "gpt-4o",
+    "start_faze": "gpt-5-mini",
     
     # VERIFY_DATA - Ověření základních údajů
     # Úkol: Kontrola města, pozice, dostupnosti
-    "verify_data": "gpt-4o",
+    "verify_data": "gpt-5-mini",
     
     # VERIFY_CV - Analýza CV a mzdových očekávání
     # Úkol: Kontrola aktuálnosti CV, poslední pozice, mzdy
-    "verify_cv": "gpt-4o",
+    "verify_cv": "gpt-5-mini",
     
     # CHANGE_PROCESS - Ad-hoc změny a dotazy
     # Úkol: Umožnit kandidátovi upravit jakákoli data kdykoliv
-    "change_process": "gpt-4o",
+    "change_process": "gpt-5-mini",
 }
 
 # --- VÝCHOZÍ MODEL ---
 # Použije se, pokud agent není explicitně definován v AGENT_MODEL_MAPPING
-DEFAULT_MODEL = "gpt-4o"
+DEFAULT_MODEL = "gpt-5-mini"
 
 
 # --- POMOCNÉ FUNKCE ---

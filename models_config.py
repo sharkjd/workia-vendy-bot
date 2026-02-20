@@ -40,6 +40,14 @@ AVAILABLE_MODELS = {
         max_tokens=2000,
     ),
     
+    # GPT-5 mini - Vyvážený model (výkon, náklady, latence)
+    "gpt-5-mini": ChatOpenAI(
+        model="gpt-5-mini",
+        api_key=os.getenv("OPENAI_API_KEY"),
+        temperature=0,
+        max_tokens=2000,
+    ),
+    
     # --- BUDOUCÍ MODELY (zakomentované) ---
     # Odkomentujte a přidejte API klíč do .env, až budete chtít použít
     
