@@ -12,24 +12,25 @@ Změnou hodnot zde můžete snadno přepínat modely pro různé části aplikac
 AGENT_MODEL_MAPPING = {
     # START_FAZE - Úvodní kontakt s kandidátem
     # Úkol: Pozdrav a získání souhlasu
-    "start_faze": "gemini-flash",
+    "start_faze": "vertex-gemini-flash",
     
     # VERIFY_DATA - Ověření základních údajů
     # Úkol: Kontrola města, pozice, dostupnosti
-    "verify_data": "gemini-flash",
+    "verify_data": "vertex-gemini-flash",
     
     # VERIFY_CV - Analýza CV a mzdových očekávání
     # Úkol: Kontrola aktuálnosti CV, poslední pozice, mzdy
-    "verify_cv": "gemini-flash",
+    "verify_cv": "vertex-gemini-flash",
     
     # CHANGE_PROCESS - Ad-hoc změny a dotazy
     # Úkol: Umožnit kandidátovi upravit jakákoli data kdykoliv
-    "change_process": "gemini-flash",
+    "change_process": "vertex-gemini-flash",
 }
 
 # --- VÝCHOZÍ MODEL ---
 # Použije se, pokud agent není explicitně definován v AGENT_MODEL_MAPPING
-DEFAULT_MODEL = "gemini-flash"
+# vertex-gemini-flash: GCP Vertex AI, region europe-west1 (bez geografických omezení Gemini API)
+DEFAULT_MODEL = "vertex-gemini-flash"
 
 
 # --- POMOCNÉ FUNKCE ---
