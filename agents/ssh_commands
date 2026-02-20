@@ -5,3 +5,5 @@ pm2 restart vendy-bot
  source venv/bin/activate
  cd ~/workia-vendy-bot
  git pull origin main
+
+ nano .env
