@@ -5,7 +5,7 @@ Jednoduchý skript pro otestování odeslání welcome zprávy přes WhatsApp.
 Použití:
   python scripts/test_whatsapp_welcome.py +420123456789
   python scripts/test_whatsapp_welcome.py 420123456789 --template
-  python scripts/test_whatsapp_welcome.py +420123456789 --text "Ahoj! Jsem Vendy."
+  python scripts/test_whatsapp_welcome.py +420123456789 --text "Ahoj! Jsem Wendy."
 """
 
 import asyncio
@@ -60,7 +60,7 @@ async def main():
     group.add_argument(
         "--text",
         type=str,
-        default="Ahoj! Jsem Vendy z Workia. Ráda bych si s tebou popovídala o tvé registraci.",
+        default="Ahoj! Jsem Wendy z Workia. Ráda bych si s tebou popovídala o tvé registraci.",
         metavar="ZPRÁVA",
         help="Odešli vlastní textovou zprávu (default: welcome text)",
     )
