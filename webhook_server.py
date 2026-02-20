@@ -72,6 +72,30 @@ async def webhook_start_whatsapp(request: WebhookStartWhatsAppRequest):
     }
 
 
+def _extract_message_text(msg: dict) -> str:
+    """
+    Extrahuje text z příchozí WhatsApp zprávy.
+    Podporuje: text, button (odpověď na tlačítko v šabloně), interactive (button_reply).
+    """
+    msg_type = msg.get("type", "")
+    if msg_type == "text":
+        return msg.get("text", {}).get("body", "").strip()
+    if msg_type == "button":
+        # Odpověď na quick-reply tlačítko v šabloně
+        btn = msg.get("button", {})
+        return (btn.get("text") or btn.get("payload") or "").strip()
+    if msg_type == "interactive":
+        # Odpověď na tlačítko v interaktivní zprávě
+        interactive = msg.get("interactive", {})
+        if interactive.get("type") == "button_reply":
+            br = interactive.get("button_reply", {})
+            return (br.get("title") or br.get("id") or "").strip()
+        if interactive.get("type") == "list_reply":
+            lr = interactive.get("list_reply", {})
+            return (lr.get("title") or lr.get("id") or "").strip()
+    return ""
+
+
 def _verify_whatsapp_signature(body: bytes, signature: str) -> bool:
     """Ověří X-Hub-Signature-256 pomocí WHATSAPP_APP_SECRET."""
     app_secret = os.getenv("WHATSAPP_APP_SECRET")
@@ -130,12 +154,8 @@ async def whatsapp_webhook_post(request: Request):
             messages = value.get("messages", [])
 
             for msg in messages:
-                if msg.get("type") != "text":
-                    continue
                 from_id = msg.get("from", "")
-                text_obj = msg.get("text", {})
-                text_body = text_obj.get("body", "")
-
+                text_body = _extract_message_text(msg)
                 if text_body:
                     asyncio.create_task(
                         handle_whatsapp_message(from_id, text_body)
