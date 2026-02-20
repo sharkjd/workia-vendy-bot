@@ -7,7 +7,7 @@ Každý model má své specifické parametry (temperature, max_tokens, atd.).
 
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
-# from langchain_openai import ChatOpenAI  # Odkomentovat, pokud budete chtít používat OpenAI
+from langchain_openai import ChatOpenAI
 # from langchain_anthropic import ChatAnthropic  # Odkomentovat pro Claude
 
 from tools.edit_candidate_record import edit_candidate_record
@@ -28,6 +28,14 @@ AVAILABLE_MODELS = {
     "gemini-pro": ChatGoogleGenerativeAI(
         model="gemini-2.5-pro",
         api_key=os.getenv("GEMINI_API_KEY"),
+        temperature=0,
+        max_tokens=2000,
+    ),
+    
+    # GPT-4o - OpenAI model pro kvalitní odpovědi
+    "gpt-4o": ChatOpenAI(
+        model="gpt-4o",
+        api_key=os.getenv("OPENAI_API_KEY"),
         temperature=0,
         max_tokens=2000,
     ),
